@@ -76,10 +76,13 @@ TOKEN : {
 	< IGUAL: "=" > |
 	< CONCAT: "&" > 
  }
-
-void inicio() : {}
+void inicio() : { }
 {
-   ( comando() )* <EOF>
+	programa() <EOF>
+}
+void programa() : {}
+{
+   ( comando() )*
 }
 void comando() : {} 
 {
@@ -155,12 +158,12 @@ void declaracao() : {Simbolo simb; Token t; }
 
 void se() : { } //if
 {
-  	<SE> <AP> expressao() <FP> inicio() <FIMSE>
+  	<SE> <AP> expressao() <FP> programa() <FIMSE>
 }
 
 void enquanto() : { } //while
 {
-  	<ENQUANTO> <AP> expressao() <FP> inicio() <FIMENQUANTO>
+  	<ENQUANTO> <AP> expressao() <FP> programa() <FIMENQUANTO>
 }
 
 void le() : { Token t; Simbolo simb; } //read
