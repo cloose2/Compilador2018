@@ -3,7 +3,8 @@ import java.util.HashMap;
 public class Tabela {
 	private HashMap<String,Simbolo> tab;
     public Tabela() {
-          this.tab = new HashMap<String,Simbolo>();
+    	
+    	  this.tab = new HashMap<String,Simbolo>();
     }
     public boolean inclui(Simbolo _simb) {
           if(this.tab.containsKey(_simb.getNome()))
