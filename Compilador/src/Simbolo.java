@@ -8,7 +8,7 @@ public class Simbolo {
     public Simbolo(String _nome) {
           this.nome = _nome;
           this.referencia = Simbolo.marcador;
-          Simbolo.marcador += 2;
+          //Simbolo.marcador += 2;
     }
     public String getNome() {
           return this.nome;
@@ -18,5 +18,9 @@ public class Simbolo {
     }
     public String toString() {
           return "Nome:"+this.getNome() + " / " + "Referência:"+this.getReferencia() + "\n";
+    }
+    
+    public void setReferencia() {
+    	this.referencia+=2;
     }
 }
