@@ -14,3 +14,5 @@ enquanto (a=0)
 fim-enquanto
 
 exibe "Media:", soma/cont;
+
+exibe c;
