@@ -123,7 +123,7 @@ void termo4() : {Token t; } //expressao entre parenteces
 	|<SUB><NUM>
 	|t = <VAR> {
 		if(!tabela.isExiste(t.image)) { 
-			System.out.println("Erro semântico \n A variável "+t.image+ " não foi inicializada");
+			System.out.println("Erro semântico \n A variável "+t.image + " não foi inicializada");
 			System.exit(1);
 		}
 	 }
@@ -139,12 +139,12 @@ void atribuicao() : {Simbolo simb; Token t;} //atribuição
        <ATRIB> expressao() <PV>
 }
 
-void declaracao() : {Simbolo simb; Token t; }
+void declaracao() : {Simbolo simb; Token t; Token tipo; }
 {
-	(<NUMERO>|<PALAVRA>)
+	(tipo = <NUMERO>|tipo = <PALAVRA>)
 	t = <VAR>
 	(  <ATRIB>
-	{simb = new Simbolo(t.image);
+	{simb = new Simbolo(t.image,tipo.image);
 	 tabela.inclui(simb);
 	}
 	expressao() )? (<VIRGULA>
