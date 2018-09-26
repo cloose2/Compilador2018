@@ -30,6 +30,11 @@ public class Simbolo {
     public String toString() {
           return "Nome:"+this.getNome() + " / " + "Referência:"+this.getReferencia() + "\n";
     }
+    public void setReferencia() {
+    	if(this.tipo == Tipo.numero.toString())this.referencia+=Tipo.numero.getValor();
+    	
+    	if(this.tipo == Tipo.palavra.toString())this.referencia+=Tipo.palavra.getValor();
+    }
     
 
 }
