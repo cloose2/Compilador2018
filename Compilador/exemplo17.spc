@@ -15,4 +15,3 @@ fim-enquanto
 
 exibe "Media:", soma/cont;
 
-exibe c;
