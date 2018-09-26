@@ -10,6 +10,8 @@ public class Tabela {
           if(this.tab.containsKey(_simb.getNome()))
                 return false;
           else {
+        	  	_simb.setReferencia();
+        	  	
                 this.tab.put(_simb.getNome(),_simb);
                 return true;
           }
