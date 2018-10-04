@@ -6,6 +6,8 @@ options {
 
 
 PARSER_BEGIN(Compilador)
+package parser;
+import semantico.*;
 import java.util.LinkedList;
 import java.io.*;
 public class Compilador {
