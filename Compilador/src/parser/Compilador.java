@@ -3,16 +3,20 @@ package parser;
 import semantico.*;
 import java.util.LinkedList;
 import java.io.*;
+import comando.*;
+import apoio.*;
+import geradorCodigo.*;
 public class Compilador implements CompiladorConstants {
         static Tabela tabela = new Tabela();
 
         public static void main(String args[])  throws ParseException  {
 
-           Compilador analisador = null;
+           //Compilador analisador = null;
 
       try {
 
-        analisador = new Compilador(new FileInputStream("exemplo17.spc")); //entrada do arquivo
+        Compilador analisador = new Compilador(new FileInputStream(Config.nomeArquivo+Config.extensaoFonte));
+        //System.out.println("entrou");
         Compilador.inicio();
         System.out.println("An\u00e1lise l\u00e9xica, sint\u00e1tica e sem\u00e2ntico sem erros!");
       }
@@ -28,11 +32,13 @@ public class Compilador implements CompiladorConstants {
    }
 
   static final public void inicio() throws ParseException {
-    programa();
+                 ListaComandosAltoNivel listaComandosAltoNivel = null;
+    listaComandosAltoNivel = programa();
     jj_consume_token(0);
   }
 
-  static final public void programa() throws ParseException {
+  static final public ListaComandosAltoNivel programa() throws ParseException {
+                                     ListaComandosAltoNivel listaComandosAltoNivel = new ListaComandosAltoNivel();
     label_1:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -49,30 +55,33 @@ public class Compilador implements CompiladorConstants {
         jj_la1[0] = jj_gen;
         break label_1;
       }
-      comando();
+      comando(listaComandosAltoNivel);
     }
+                {if (true) return listaComandosAltoNivel;}
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void comando() throws ParseException {
+  static final public void comando(ListaComandosAltoNivel listaComandosAltoNivel) throws ParseException {
+                                                               listaComandosAltoNivel = null;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case VAR:
-      atribuicao();
+      atribuicao(listaComandosAltoNivel);
       break;
     case NUMERO:
     case PALAVRA:
       declaracao();
       break;
     case SE:
-      se();
+      se(listaComandosAltoNivel);
       break;
     case ENQUANTO:
-      enquanto();
+      enquanto(listaComandosAltoNivel);
       break;
     case LEITURA:
-      le();
+      le(listaComandosAltoNivel);
       break;
     case EXIBE:
-      exibe();
+      exibe(listaComandosAltoNivel);
       break;
     default:
       jj_la1[1] = jj_gen;
@@ -81,15 +90,17 @@ public class Compilador implements CompiladorConstants {
     }
   }
 
-  static final public void expressao() throws ParseException {
-                   LinkedList<Item> listaExp = new LinkedList<Item>();
-    expressao2(listaExp);
-                              System.out.println(listaExp + "\u005cn");
+//			EXPRESSOES
+  static final public Expressao expressao() throws ParseException {
+                        Expressao expressao_lista = new Expressao();
+    expressao2(expressao_lista);
+                                    {if (true) return expressao_lista;}
+    throw new Error("Missing return statement in function");
   }
 
-  static final public void expressao2(LinkedList<Item> listaExp) throws ParseException {
-                                              Item item = null; Token t;
-    termo(listaExp);
+  static final public void expressao2(Expressao expressao_lista) throws ParseException {
+                                               Token t;
+    termo(expressao_lista);
     label_2:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -101,19 +112,19 @@ public class Compilador implements CompiladorConstants {
         break label_2;
       }
       t = jj_consume_token(OU);
-      termo(listaExp);
-                                           item = new Item( Tipo.operador, t.image ); listaExp.add(item);
+      termo(expressao_lista);
+     expressao_lista.addItemPosfixo(new Operador(t, TipoOperador.OR));
     }
   }
 
-  static final public void termo(LinkedList<Item> listaExp) throws ParseException {
-                                          Item item = null; Token t;
-    termo1(listaExp);
+  static final public void termo(Expressao expressao_lista) throws ParseException {
+                                          Token t;
+    termo1(expressao_lista);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case IGUAL:
       t = jj_consume_token(IGUAL);
-      termo1(listaExp);
-                                                 item = new Item( Tipo.operador, t.image ); listaExp.add(item);
+      termo1(expressao_lista);
+                expressao_lista.addItemPosfixo(new Operador(t, TipoOperador.IGUAL));
       break;
     default:
       jj_la1[3] = jj_gen;
@@ -121,9 +132,9 @@ public class Compilador implements CompiladorConstants {
     }
   }
 
-  static final public void termo1(LinkedList<Item> listaExp) throws ParseException {
-                                          Item item = null; Token t;
-    termo2(listaExp);
+  static final public void termo1(Expressao expressao_lista) throws ParseException {
+                                          Token t;
+    termo2(expressao_lista);
     label_3:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -135,14 +146,14 @@ public class Compilador implements CompiladorConstants {
         break label_3;
       }
       t = jj_consume_token(CONCAT);
-      termo2(listaExp);
-                                                 item = new Item( Tipo.operador, t.image ); listaExp.add(item);
+      termo2(expressao_lista);
+          expressao_lista.addItemPosfixo(new Operador(t, TipoOperador.CONCAT));
     }
   }
 
-  static final public void termo2(LinkedList<Item> listaExp) throws ParseException {
-                                          Item item = null; Token t;
-    termo3(listaExp);
+  static final public void termo2(Expressao expressao_lista) throws ParseException {
+                                          Token t; TipoOperador tipo;
+    termo3(expressao_lista);
     label_4:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -157,23 +168,25 @@ public class Compilador implements CompiladorConstants {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case SOMA:
         t = jj_consume_token(SOMA);
+                   tipo = TipoOperador.ADD;
         break;
       case SUB:
         t = jj_consume_token(SUB);
+                  tipo = TipoOperador.SUB;
         break;
       default:
         jj_la1[6] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
-      termo3(listaExp);
-                                                          item = new Item( Tipo.operador, t.image ); listaExp.add(item);
+      termo3(expressao_lista);
+          expressao_lista.addItemPosfixo(new Operador(t, tipo));
     }
   }
 
-  static final public void termo3(LinkedList<Item> listaExp) throws ParseException {
-                                          Item item = null; Token t;
-    termo4(listaExp);
+  static final public void termo3(Expressao expressao_lista) throws ParseException {
+                                          Token t; TipoOperador tipo;
+    termo4(expressao_lista);
     label_5:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -188,80 +201,92 @@ public class Compilador implements CompiladorConstants {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case MUL:
         t = jj_consume_token(MUL);
+                  tipo = TipoOperador.MUL;
         break;
       case DIV:
         t = jj_consume_token(DIV);
+                  tipo = TipoOperador.DIV;
         break;
       default:
         jj_la1[8] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
-      termo4(listaExp);
-                                                         item = new Item( Tipo.operador, t.image ); listaExp.add(item);
+      termo4(expressao_lista);
+          expressao_lista.addItemPosfixo(new Operador(t, tipo));
     }
   }
 
-  static final public void termo4(LinkedList<Item> listaExp) throws ParseException {
-                                           Item item = null; Token t=null; char sinal=' '; Tipo tipo=null;
+  static final public void termo4(Expressao expressao_lista) throws ParseException {
+                                           Token t;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case AP:
       jj_consume_token(AP);
-      expressao2(listaExp);
+      expressao2(expressao_lista);
       jj_consume_token(FP);
       break;
     case NUM:
       t = jj_consume_token(NUM);
-                    tipo=Tipo.numero;
+                          //System.out.println("aqui veio Satanas");
+                          Operando operador = new Operando(t, TipoDado.NUMERO, TipoElemento.CTE);
+                          //System.out.println("matarei o golias");
+                          expressao_lista.addItemPosfixo(operador);
+                          //System.out.println("ate aqui JUDAS");
+                          //expressao_lista.imprime();
+
       break;
     case SOMA:
       jj_consume_token(SOMA);
       t = jj_consume_token(NUM);
-                            tipo=Tipo.numero;sinal='+';
+                          expressao_lista.addItemPosfixo(new Operando(t, TipoDado.NUMERO, TipoElemento.CTE));
       break;
     case SUB:
       jj_consume_token(SUB);
       t = jj_consume_token(NUM);
-                         tipo=Tipo.numero;sinal='-';
+                          expressao_lista.addItemPosfixo(new Operando(t, TipoDado.NUMERO, TipoElemento.CTE));
       break;
     case VAR:
       t = jj_consume_token(VAR);
-                    tipo=Tipo.variavel;
-                if(!tabela.isExiste(t.image)) {
-                        System.out.println("Erro sem\u00e2ntico \u005cn A vari\u00e1vel "+t.image + " n\u00e3o foi inicializada");
-                        System.exit(1);
-                }
+                                AcoesSemantica.variavelNaoDeclarada(t, tabela);
+                                expressao_lista.addItemPosfixo(new Operando(t, tabela.consultaTipo(t.image), TipoElemento.VAR));
       break;
     case STRING:
       t = jj_consume_token(STRING);
-                       tipo=Tipo.string;
+                          expressao_lista.addItemPosfixo(new Operando(t, TipoDado.PALAVRA, TipoElemento.CTE));
       break;
     default:
       jj_la1[9] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
-          item = new Item( tipo , sinal + t.image ); listaExp.add(item);
   }
 
-  static final public void atribuicao() throws ParseException {
-                     Simbolo simb; Token t;
+//			COMANDOS
+  static final public void atribuicao(ListaComandosAltoNivel listaComandosAltoNivel) throws ParseException {
+         Simbolo simb; Token t; Expressao expressao; ComandoAtribuicao comandoAtribuicao;
     t = jj_consume_token(VAR);
-        simb = new Simbolo(t.image);
-        tabela.inclui(simb);
+        AcoesSemantica.variavelNaoDeclarada(t,tabela);
     jj_consume_token(ATRIB);
-    expressao();
+    /*{System.out.println("chegou2"); }*/ expressao = expressao();
+                simb = new Simbolo(t, TipoDado.PALAVRA);
+                comandoAtribuicao = new ComandoAtribuicao(t,tabela.consultaSimbolo(t.image),expressao);
+                //System.out.println(comandoAtribuicao+"\n"); //Criação do comando OK
+                //System.out.println(listaComandosAltoNivel+"\n");
+                //listaComandosAltoNivel.addComando(comandoAtribuicao);
+                System.out.println(comandoAtribuicao.toString());
     jj_consume_token(PV);
   }
 
   static final public void declaracao() throws ParseException {
-                     Simbolo simb; Token t; Token tipo;
+                     Token t; TipoDado tipo;
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case NUMERO:
-      tipo = jj_consume_token(NUMERO);
+      jj_consume_token(NUMERO);
+                     tipo = TipoDado.NUMERO;
       break;
     case PALAVRA:
-      tipo = jj_consume_token(PALAVRA);
+      jj_consume_token(PALAVRA);
+                      tipo = TipoDado.PALAVRA;
       break;
     default:
       jj_la1[10] = jj_gen;
@@ -269,11 +294,10 @@ public class Compilador implements CompiladorConstants {
       throw new ParseException();
     }
     t = jj_consume_token(VAR);
+                   AcoesSemantica.trataDeclaracao(tabela,t,tipo);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case ATRIB:
       jj_consume_token(ATRIB);
-         simb = new Simbolo(t.image,tipo.image);
-         tabela.inclui(simb);
       expressao();
       break;
     default:
@@ -295,44 +319,52 @@ public class Compilador implements CompiladorConstants {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case ATRIB:
         jj_consume_token(ATRIB);
-         simb = new Simbolo(t.image);
-         tabela.inclui(simb);
         expressao();
         break;
       default:
         jj_la1[13] = jj_gen;
         ;
       }
+                                          AcoesSemantica.trataDeclaracao(tabela,t,tipo);
     }
     jj_consume_token(PV);
   }
 
-  static final public void se() throws ParseException {
-    jj_consume_token(SE);
+  static final public void se(ListaComandosAltoNivel listaComandosAltoNivel) throws ParseException {
+ Token t; Expressao expressao; ComandoCondicionalSimples comandoCondicional;
+    t = jj_consume_token(SE);
     jj_consume_token(AP);
-    expressao();
+    expressao = expressao();
     jj_consume_token(FP);
-    programa();
+    listaComandosAltoNivel = programa();
+           comandoCondicional = new ComandoCondicionalSimples(t, expressao,listaComandosAltoNivel);
+           //listaComandosAltoNivel.addComando(comandoCondicional);
+           System.out.println(comandoCondicional.toString());
     jj_consume_token(FIMSE);
   }
 
-  static final public void enquanto() throws ParseException {
-    jj_consume_token(ENQUANTO);
+  static final public void enquanto(ListaComandosAltoNivel listaComandosAltoNivel) throws ParseException {
+  Token t; Expressao expressao; ComandoEnquanto comandoEnquanto;
+    t = jj_consume_token(ENQUANTO);
     jj_consume_token(AP);
-    expressao();
+    expressao = expressao();
     jj_consume_token(FP);
-    programa();
+    listaComandosAltoNivel = programa();
+           comandoEnquanto = new ComandoEnquanto(t, expressao,listaComandosAltoNivel);
+           //listaComandosAltoNivel.addComando(comandoEnquanto);
+           System.out.println(comandoEnquanto.toString());
     jj_consume_token(FIMENQUANTO);
   }
 
-  static final public void le() throws ParseException {
-              Token t; Simbolo simb;
-    jj_consume_token(LEITURA);
-    t = jj_consume_token(VAR);
-          if(!tabela.isExiste(t.image)) {
-                        simb = new Simbolo(t.image);
-                        tabela.inclui(simb);
-                }
+  static final public void le(ListaComandosAltoNivel listaComandosAltoNivel) throws ParseException {
+                                                           Token t; Token variavel; Simbolo simb; ComandoEntrada comandoEntrada;
+    t = jj_consume_token(LEITURA);
+    variavel = jj_consume_token(VAR);
+                AcoesSemantica.variavelNaoDeclarada(variavel,tabela);
+                simb = new Simbolo(t, TipoDado.PALAVRA);
+                comandoEntrada = new ComandoEntrada(t,simb);
+                //listaComandosAltoNivel.addComando(comandoEntrada);
+                System.out.println(comandoEntrada.toString());
     label_7:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -345,13 +377,22 @@ public class Compilador implements CompiladorConstants {
       }
       jj_consume_token(VIRGULA);
       jj_consume_token(VAR);
+                  AcoesSemantica.variavelNaoDeclarada(variavel,tabela);
+                  simb = new Simbolo(t, TipoDado.PALAVRA);
+                  comandoEntrada = new ComandoEntrada(t,simb);
+                  //listaComandosAltoNivel.addComando(comandoEntrada);
+                  System.out.println(comandoEntrada.toString());
     }
     jj_consume_token(PV);
   }
 
-  static final public void exibe() throws ParseException {
-    jj_consume_token(EXIBE);
-    expressao();
+  static final public void exibe(ListaComandosAltoNivel listaComandosAltoNivel) throws ParseException {
+                                                             Token t; Expressao expressao; ComandoSaida comandoSaida;
+    t = jj_consume_token(EXIBE);
+    expressao = expressao();
+           comandoSaida = new ComandoSaida(t,expressao);
+           //listaComandosAltoNivel.addComando(comandoSaida);
+           System.out.println(comandoSaida.toString());
     label_8:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -363,7 +404,10 @@ public class Compilador implements CompiladorConstants {
         break label_8;
       }
       jj_consume_token(VIRGULA);
-      expressao();
+      expressao = expressao();
+                  comandoSaida = new ComandoSaida(t,expressao);
+                  //listaComandosAltoNivel.addComando(comandoSaida);
+              System.out.println(comandoSaida.toString());
     }
     jj_consume_token(PV);
   }
